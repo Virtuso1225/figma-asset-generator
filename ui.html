@@ -1,0 +1,102 @@
+<!-- src/ui.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Asset Uploader</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    #asset-preview {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #asset-preview img {
+      max-width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: auto;
+      padding: 10px;
+    }
+    #upload-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #16B6E9;
+      color: white;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+    }
+    #message {
+      margin-top: 20px;
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>선택된 에셋 미리보기</h2>
+  <div id="asset-preview">
+    <!-- 에셋 정보가 여기에 표시됩니다 -->
+  </div>
+  <button id="upload-button">에셋 업로드</button>
+  <div id="message"></div>
+
+  <script>
+    console.log("UI loaded");
+
+    // Figma 메인 스크립트로부터 메시지 수신
+    onmessage = (event) => {
+      const { type, payload } = event.data.pluginMessage;
+
+      if (type === 'selected-asset') {
+        const assetPreview = document.getElementById('asset-preview');
+        const messageDiv = document.getElementById('message');
+
+        if (payload.message) {
+          assetPreview.innerHTML = '';
+          messageDiv.innerText = payload.message;
+          return;
+        }
+
+        messageDiv.innerText = ''; // 에러 메시지 초기화
+
+        assetPreview.innerHTML = ''; // 에셋 미리보기 초기화
+        // 에셋 타입과 이름 표시
+        const info = document.createElement('p');
+        info.innerHTML = `<strong>타입:</strong> ${payload.type} 
+ <strong>이름:</strong> ${payload.name}`;
+        assetPreview.appendChild(info);
+
+        // 에셋 이미지 표시
+        if (payload.image) {
+          const img = document.createElement('img');
+          img.src = payload.image;
+          assetPreview.appendChild(img);
+        }
+      }
+
+      if (type === 'upload-success') {
+        const assetPreview = document.getElementById('asset-preview');
+        const messageDiv = document.getElementById('message');
+
+        const url = payload.url;
+        assetPreview.innerHTML += `<p>업로드된 URL:</p><a href="${url}" target="_blank">${url}</a>`;
+        messageDiv.innerText = '업로드가 성공적으로 완료되었습니다!';
+      }
+    };
+
+    // 업로드 버튼 클릭 시 메시지 전송
+    document.getElementById('upload-button').onclick = () => {
+      console.log("Upload button clicked");
+      parent.postMessage({ pluginMessage: { type: 'upload-asset' } }, '*');
+    };
+  </script>
+</body>
+</html>
